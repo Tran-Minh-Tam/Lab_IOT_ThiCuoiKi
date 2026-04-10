@@ -1,0 +1,8 @@
+.pio
+.vscode/
+.sconsign.dblite
+*.bin
+*.elf
+*.hex
+.DS_Store
+Thumbs.db

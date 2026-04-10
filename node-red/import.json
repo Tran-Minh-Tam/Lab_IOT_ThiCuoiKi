@@ -1,0 +1,1172 @@
+[
+    {
+        "id": "01122f8bf11e4369",
+        "type": "tab",
+        "label": "Flow 5",
+        "disabled": false,
+        "info": "",
+        "env": []
+    },
+    {
+        "id": "mqtt_in_data",
+        "type": "mqtt in",
+        "z": "01122f8bf11e4369",
+        "name": "MQTT: sensor data",
+        "topic": "tuoicay/data",
+        "qos": "0",
+        "datatype": "json",
+        "broker": "f9d19b90f3fba9ce",
+        "nl": false,
+        "rap": false,
+        "rh": 0,
+        "inputs": 0,
+        "x": 110,
+        "y": 480,
+        "wires": [
+            [
+                "parse_and_route"
+            ]
+        ]
+    },
+    {
+        "id": "parse_and_route",
+        "type": "function",
+        "z": "01122f8bf11e4369",
+        "name": "Parse & Route",
+        "func": "var data = msg.payload;\nflow.set('lastSoil', data.soil);\nflow.set('lastTemp', data.temp);\nflow.set('lastHum', data.humidity);\nflow.set('pump_state', data.pump); // Added for simulator\n\n// Determine Statuses with Icons\nvar soilS = \"✅ Đất am tốt\";\nif (data.soil < 30) soilS = \"🚨 Đất khô hạn\";\nelse if (data.soil < 45) soilS = \"⚠️ Đất hơi khô\";\n\nvar tempS = \"✅ Nhiệt độ ổn định\";\nif (data.temp > 35) tempS = \"🚨 Nhiệt độ quá cao\";\nelse if (data.temp < 18) tempS = \"❄️ Nhiệt độ thấp\";\n\nvar humS = \"✅ Độ ẩm KK tốt\";\nif (data.humidity < 40) humS = \"💨 Không khí khô\";\n\nreturn [\n    {payload: data.soil, topic: 'soil'},\n    {payload: data.temp, topic: 'temp'},\n    {payload: data.humidity, topic: 'humidity'},\n    {payload: data.pump ? '🔴 ĐANG BƠM' : '🟢 BƠM ĐANG TẮT', topic: 'pump_status'},\n    {payload: soilS, topic: 'soil_status'},\n    {payload: tempS + \" | \" + humS, topic: 'air_status'}\n];",
+        "outputs": 6,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 380,
+        "y": 480,
+        "wires": [
+            [
+                "home_soil_data"
+            ],
+            [
+                "gauge_temp",
+                "chart_temp",
+                "home_temp_data"
+            ],
+            [
+                "gauge_hum",
+                "chart_hum",
+                "home_hum_data"
+            ],
+            [],
+            [],
+            [
+                "air_status_ui"
+            ]
+        ]
+    },
+    {
+        "id": "gauge_temp",
+        "type": "ui_gauge",
+        "z": "01122f8bf11e4369",
+        "name": "Gauge Temp",
+        "group": "grp_air_temp_main",
+        "order": 1,
+        "width": "6",
+        "height": "4",
+        "gtype": "gage",
+        "title": "🌡 Nhiệt Độ",
+        "label": "°C",
+        "format": "{{value | number:1}}°C",
+        "min": "0",
+        "max": "50",
+        "colors": [
+            "#00897b",
+            "#f9a825",
+            "#e64a19"
+        ],
+        "seg1": "20",
+        "seg2": "35",
+        "className": "custom-gauge",
+        "x": 690,
+        "y": 460,
+        "wires": []
+    },
+    {
+        "id": "chart_temp",
+        "type": "ui_chart",
+        "z": "01122f8bf11e4369",
+        "name": "Chart Temp",
+        "group": "grp_air_temp_main",
+        "order": 2,
+        "width": "6",
+        "height": "4",
+        "label": "Biểu Đồ Nhiệt Độ (10 điểm)",
+        "chartType": "line",
+        "legend": "false",
+        "xformat": "HH:mm:ss",
+        "interpolate": "linear",
+        "nodata": "Đang nhận dữ liệu...",
+        "dot": false,
+        "ymin": "0",
+        "ymax": "50",
+        "removeOlder": "1",
+        "removeOlderPoints": "10",
+        "removeOlderUnit": "60",
+        "cutout": 0,
+        "useOneColor": false,
+        "useUTC": false,
+        "colors": [
+            "#e64a19",
+            "#aec0ff",
+            "#2ca02c",
+            "#d62728",
+            "#9467bd",
+            "#8c564b",
+            "#e377c2",
+            "#7f7f7f",
+            "#bcbd22",
+            "#17becf"
+        ],
+        "outputs": 1,
+        "x": 690,
+        "y": 400,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "gauge_hum",
+        "type": "ui_gauge",
+        "z": "01122f8bf11e4369",
+        "name": "Gauge Hum",
+        "group": "grp_air_hum_main",
+        "order": 1,
+        "width": "6",
+        "height": "4",
+        "gtype": "gage",
+        "title": "💨 Độ Ẩm Không Khí",
+        "label": "%",
+        "format": "{{value | number:1}}%",
+        "min": "0",
+        "max": "100",
+        "colors": [
+            "#cf6679",
+            "#f9a825",
+            "#2e7d32"
+        ],
+        "seg1": "30",
+        "seg2": "65",
+        "className": "custom-gauge",
+        "x": 690,
+        "y": 560,
+        "wires": []
+    },
+    {
+        "id": "chart_hum",
+        "type": "ui_chart",
+        "z": "01122f8bf11e4369",
+        "name": "Chart Hum",
+        "group": "grp_air_hum_main",
+        "order": 2,
+        "width": "6",
+        "height": "4",
+        "label": "Biểu Đồ Độ Ẩm KK (10 điểm)",
+        "chartType": "line",
+        "legend": "false",
+        "xformat": "HH:mm:ss",
+        "interpolate": "linear",
+        "nodata": "Đang nhận dữ liệu...",
+        "dot": false,
+        "ymin": "0",
+        "ymax": "100",
+        "removeOlder": "1",
+        "removeOlderPoints": "10",
+        "removeOlderUnit": "60",
+        "cutout": 0,
+        "useOneColor": false,
+        "useUTC": false,
+        "colors": [
+            "#1976d2",
+            "#aec0ff",
+            "#2ca02c",
+            "#d62728",
+            "#9467bd",
+            "#8c564b",
+            "#e377c2",
+            "#7f7f7f",
+            "#bcbd22",
+            "#17becf"
+        ],
+        "outputs": 1,
+        "x": 690,
+        "y": 500,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "air_status_ui",
+        "type": "ui_text",
+        "z": "01122f8bf11e4369",
+        "group": "grp_air_hum_main",
+        "order": 3,
+        "width": "12",
+        "height": "1",
+        "name": "Air Status",
+        "label": "Tình Trạng Không Khí",
+        "format": "{{msg.payload}}",
+        "layout": "row-spread",
+        "className": "status-card",
+        "x": 680,
+        "y": 680,
+        "wires": []
+    },
+    {
+        "id": "btn_on",
+        "type": "ui_button",
+        "z": "01122f8bf11e4369",
+        "name": "Bật",
+        "group": "",
+        "order": 1,
+        "width": "3",
+        "height": "1",
+        "passthru": false,
+        "label": "💧 Bật Bơm",
+        "tooltip": "",
+        "color": "#fff",
+        "bgcolor": "#2e7d32",
+        "icon": "water_drop",
+        "payload": "ON",
+        "payloadType": "str",
+        "topic": "tuoicay/manual",
+        "x": 410,
+        "y": 800,
+        "wires": [
+            [
+                "mqtt_out"
+            ]
+        ]
+    },
+    {
+        "id": "btn_off",
+        "type": "ui_button",
+        "z": "01122f8bf11e4369",
+        "name": "Tắt",
+        "group": "",
+        "order": 2,
+        "width": "3",
+        "height": "1",
+        "passthru": false,
+        "label": "⏹ Tắt Bơm",
+        "tooltip": "",
+        "color": "#fff",
+        "bgcolor": "#d32f2f",
+        "icon": "stop",
+        "payload": "OFF",
+        "payloadType": "str",
+        "topic": "tuoicay/manual",
+        "x": 410,
+        "y": 720,
+        "wires": [
+            [
+                "mqtt_out"
+            ]
+        ]
+    },
+    {
+        "id": "mqtt_out",
+        "type": "mqtt out",
+        "z": "01122f8bf11e4369",
+        "name": "MQTT Out",
+        "topic": "tuoicay/manual",
+        "qos": "0",
+        "retain": "",
+        "respTopic": "",
+        "contentType": "",
+        "userProps": "",
+        "correl": "",
+        "expiry": "",
+        "broker": "f9d19b90f3fba9ce",
+        "x": 690,
+        "y": 760,
+        "wires": []
+    },
+    {
+        "id": "home_soil_data",
+        "type": "ui_text",
+        "z": "01122f8bf11e4369",
+        "group": "grp_home_data",
+        "order": 1,
+        "width": "4",
+        "height": "1",
+        "name": "Home Soil",
+        "label": "Độ Ẩm Đất",
+        "format": "{{msg.payload}}%",
+        "layout": "col-center",
+        "className": "",
+        "x": 690,
+        "y": 280,
+        "wires": []
+    },
+    {
+        "id": "home_temp_data",
+        "type": "ui_text",
+        "z": "01122f8bf11e4369",
+        "group": "grp_home_data",
+        "order": 2,
+        "width": "4",
+        "height": "1",
+        "name": "Home Temp",
+        "label": "Nhiệt Độ",
+        "format": "{{msg.payload}}°C",
+        "layout": "col-center",
+        "className": "",
+        "x": 690,
+        "y": 340,
+        "wires": []
+    },
+    {
+        "id": "home_hum_data",
+        "type": "ui_text",
+        "z": "01122f8bf11e4369",
+        "group": "grp_home_data",
+        "order": 3,
+        "width": "4",
+        "height": "1",
+        "name": "Home Hum",
+        "label": "Âm Không Khí",
+        "format": "{{msg.payload}}%",
+        "layout": "col-center",
+        "className": "",
+        "x": 690,
+        "y": 620,
+        "wires": []
+    },
+    {
+        "id": "5418e38fbb88e951",
+        "type": "mqtt in",
+        "z": "01122f8bf11e4369",
+        "name": "MQTT: sensor data",
+        "topic": "tuoicay/data",
+        "qos": "0",
+        "datatype": "json",
+        "broker": "f9d19b90f3fba9ce",
+        "nl": false,
+        "rap": false,
+        "rh": 0,
+        "inputs": 0,
+        "x": 870,
+        "y": 140,
+        "wires": [
+            [
+                "c8d2dd95d7815bb6"
+            ]
+        ]
+    },
+    {
+        "id": "c8d2dd95d7815bb6",
+        "type": "function",
+        "z": "01122f8bf11e4369",
+        "name": "Parse & Route",
+        "func": "var data = msg.payload;\nflow.set('lastSoil', data.soil);\nflow.set('lastTemp', data.temp);\nflow.set('lastHum', data.humidity);\n\n// Statuses for Soil and Air\nvar soilS = \"✅ Đất am tốt\";\nif (data.soil < 30) soilS = \"🚨 Đất khô hạn\";\nelse if (data.soil < 45) soilS = \"⚠️ Đất hơi khô\";\n\nvar tempS = \"✅ Nhiệt độ ổn định\";\nif (data.temp > 35) tempS = \"🚨 Nhiệt độ quá cao\";\nelse if (data.temp < 18) tempS = \"❄️ Nhiệt độ thấp\";\n\nvar humS = \"✅ Độ ẩm KK tốt\";\nif (data.humidity < 40) humS = \"💨 Không khí khô\";\n\n// Water flow rate simulator (if pump is on, flow is ~0.1L/s)\nvar flowRate = data.pump ? 0.1 : 0;\n\nreturn [\n    {payload: data.soil, topic: 'soil'},\n    {payload: data.temp, topic: 'temp'},\n    {payload: data.humidity, topic: 'humidity'},\n    {payload: data.pump ? '🔴 ĐANG BƠM' : '🟢 BƠM ĐANG TẮT', topic: 'pump_status'},\n    {payload: soilS, topic: 'soil_status'},\n    {payload: tempS + \" | \" + humS, topic: 'air_status'},\n    {payload: flowRate, topic: 'water_flow'}\n];",
+        "outputs": 7,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 1040,
+        "y": 360,
+        "wires": [
+            [
+                "home_soil_gauge",
+                "d6d5a28f4977edcc",
+                "b9e76b4d44b2b422"
+            ],
+            [
+                "home_temp_gauge"
+            ],
+            [
+                "home_hum_gauge"
+            ],
+            [
+                "bca952a6f4390de5",
+                "80159177494cd3d6"
+            ],
+            [
+                "f3ad574584ea65d4"
+            ],
+            [],
+            [
+                "water_flow_chart"
+            ]
+        ]
+    },
+    {
+        "id": "home_soil_gauge",
+        "type": "ui_gauge",
+        "z": "01122f8bf11e4369",
+        "name": "Home Soil Gauge",
+        "group": "grp_home_gauges",
+        "order": 1,
+        "width": "4",
+        "height": "4",
+        "gtype": "gage",
+        "title": "💧 ĐỘ ẨM ĐẤT",
+        "label": "%",
+        "format": "{{value}}%",
+        "min": "0",
+        "max": "100",
+        "colors": [
+            "#cf6679",
+            "#f9a825",
+            "#2e7d32"
+        ],
+        "seg1": "30",
+        "seg2": "60",
+        "className": "custom-gauge",
+        "x": 1390,
+        "y": 260,
+        "wires": []
+    },
+    {
+        "id": "home_temp_gauge",
+        "type": "ui_gauge",
+        "z": "01122f8bf11e4369",
+        "name": "Home Temp Gauge",
+        "group": "grp_home_gauges",
+        "order": 2,
+        "width": "4",
+        "height": "4",
+        "gtype": "gage",
+        "title": "🌡 NHIỆT ĐỘ",
+        "label": "°C",
+        "format": "{{value}}°C",
+        "min": "0",
+        "max": "50",
+        "colors": [
+            "#00897b",
+            "#f9a825",
+            "#e64a19"
+        ],
+        "seg1": "20",
+        "seg2": "35",
+        "className": "custom-gauge",
+        "x": 1390,
+        "y": 320,
+        "wires": []
+    },
+    {
+        "id": "home_hum_gauge",
+        "type": "ui_gauge",
+        "z": "01122f8bf11e4369",
+        "name": "Home Hum Gauge",
+        "group": "grp_home_gauges",
+        "order": 3,
+        "width": "4",
+        "height": "4",
+        "gtype": "gage",
+        "title": "💨 ĐỘ ẨM KK",
+        "label": "%",
+        "format": "{{value}}%",
+        "min": "0",
+        "max": "100",
+        "colors": [
+            "#cf6679",
+            "#f9a825",
+            "#2e7d32"
+        ],
+        "seg1": "30",
+        "seg2": "65",
+        "className": "custom-gauge",
+        "x": 1390,
+        "y": 380,
+        "wires": []
+    },
+    {
+        "id": "sw_pump_ctrl",
+        "type": "ui_switch",
+        "z": "01122f8bf11e4369",
+        "name": "Công Tác Bơm",
+        "label": "🔄 Chế Độ Bơm",
+        "tooltip": "",
+        "group": "grp_pump_ctrl",
+        "order": 1,
+        "width": "6",
+        "height": "1",
+        "passthru": true,
+        "decouple": "false",
+        "topic": "tuoicay/manual",
+        "style": "",
+        "onvalue": "ON",
+        "onvalueType": "str",
+        "onicon": "",
+        "oncolor": "",
+        "offvalue": "OFF",
+        "offvalueType": "str",
+        "officon": "",
+        "offcolor": "",
+        "className": "",
+        "x": 410,
+        "y": 900,
+        "wires": [
+            [
+                "348f7029c53e0342",
+                "audio_trigger"
+            ]
+        ]
+    },
+    {
+        "id": "num_water_timer",
+        "type": "ui_numeric",
+        "z": "01122f8bf11e4369",
+        "name": "Hẹn Giờ (s)",
+        "label": "⏱ Giờ Tưới (giây)",
+        "tooltip": "",
+        "group": "grp_pump_ctrl",
+        "order": 2,
+        "width": "3",
+        "height": "1",
+        "wrap": false,
+        "passthru": true,
+        "topic": "water_duration",
+        "format": "{{value}}",
+        "min": "1",
+        "max": "600",
+        "step": "1",
+        "className": "",
+        "x": 410,
+        "y": 960,
+        "wires": [
+            [
+                "fn_store_duration"
+            ]
+        ]
+    },
+    {
+        "id": "fn_store_duration",
+        "type": "function",
+        "z": "01122f8bf11e4369",
+        "name": "Store Duration",
+        "func": "flow.set('water_duration', msg.payload);\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 580,
+        "y": 960,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "btn_water_timer",
+        "type": "ui_button",
+        "z": "01122f8bf11e4369",
+        "name": "Bắt đầu hẹn giờ",
+        "group": "grp_pump_ctrl",
+        "order": 3,
+        "width": "3",
+        "height": "1",
+        "passthru": false,
+        "label": "▶ CHẠY HẸN GIỜ",
+        "tooltip": "",
+        "color": "",
+        "bgcolor": "#1976d2",
+        "icon": "timer",
+        "payload": "START",
+        "payloadType": "str",
+        "topic": "tuoicay/timer",
+        "x": 430,
+        "y": 1020,
+        "wires": [
+            [
+                "fn_water_timer"
+            ]
+        ]
+    },
+    {
+        "id": "fn_water_timer",
+        "type": "function",
+        "z": "01122f8bf11e4369",
+        "name": "Timer Logic",
+        "func": "var duration = flow.get('water_duration') || 10;\nmsg.payload = \"ON\";\nnode.send(msg);\n\nsetTimeout(function() {\n    node.send({payload: \"OFF\", topic: \"tuoicay/manual\"});\n}, duration * 1000);\n\nreturn null;",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 600,
+        "y": 1020,
+        "wires": [
+            [
+                "348f7029c53e0342",
+                "audio_trigger"
+            ]
+        ]
+    },
+    {
+        "id": "audio_trigger",
+        "type": "function",
+        "z": "01122f8bf11e4369",
+        "name": "Audio Trigger",
+        "func": "if (msg.payload === \"ON\") {\n    return { payload: \"Hệ thống đang bắt đầu tưới nước\" };\n}\nreturn null;",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 780,
+        "y": 900,
+        "wires": [
+            [
+                "audio_pump_alert"
+            ]
+        ]
+    },
+    {
+        "id": "audio_pump_alert",
+        "type": "ui_audio",
+        "z": "01122f8bf11e4369",
+        "name": "Speaker",
+        "group": "grp_pump_ctrl",
+        "voice": "vietnamese",
+        "always": true,
+        "x": 960,
+        "y": 900,
+        "wires": []
+    },
+    {
+        "id": "inj_rand_sim",
+        "type": "inject",
+        "z": "01122f8bf11e4369",
+        "name": "Chaos Sim",
+        "props": [
+            {
+                "p": "payload"
+            }
+        ],
+        "repeat": "2",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "",
+        "payloadType": "date",
+        "x": 130,
+        "y": 300,
+        "wires": [
+            [
+                "fn_rand_gen"
+            ]
+        ]
+    },
+    {
+        "id": "fn_rand_gen",
+        "type": "function",
+        "z": "01122f8bf11e4369",
+        "name": "Chaos Generator",
+        "func": "var soil = Math.floor(Math.random() * 101);\nvar temp = (Math.random() * 30 + 15).toFixed(1);\nvar hum = (Math.random() * 75 + 20).toFixed(1);\n\nmsg.payload = {\n    soil: soil,\n    temp: parseFloat(temp),\n    humidity: parseFloat(hum),\n    pump: flow.get('pump_state') || false\n};\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 330,
+        "y": 300,
+        "wires": [
+            [
+                "mq_out_data_sim"
+            ]
+        ]
+    },
+    {
+        "id": "mq_out_data_sim",
+        "type": "mqtt out",
+        "z": "01122f8bf11e4369",
+        "name": "MQTT Data Sim",
+        "topic": "tuoicay/data",
+        "qos": "0",
+        "retain": "",
+        "respTopic": "",
+        "contentType": "",
+        "userProps": "",
+        "correl": "",
+        "expiry": "",
+        "broker": "f9d19b90f3fba9ce",
+        "x": 540,
+        "y": 300,
+        "wires": []
+    },
+    {
+        "id": "348f7029c53e0342",
+        "type": "mqtt out",
+        "z": "01122f8bf11e4369",
+        "name": "MQTT Out",
+        "topic": "tuoicay/manual",
+        "qos": "0",
+        "retain": "",
+        "respTopic": "",
+        "contentType": "",
+        "userProps": "",
+        "correl": "",
+        "expiry": "",
+        "broker": "23771aa94bb316bf",
+        "x": 690,
+        "y": 940,
+        "wires": []
+    },
+    {
+        "id": "water_flow_chart",
+        "type": "ui_chart",
+        "z": "01122f8bf11e4369",
+        "name": "Water Flow Chart",
+        "group": "grp_pump_realtime",
+        "order": 1,
+        "width": "12",
+        "height": "4",
+        "label": "Dòng Nước Tưới Thời Gian Thực (L/s)",
+        "chartType": "bar",
+        "legend": "false",
+        "xformat": "HH:mm:ss",
+        "interpolate": "linear",
+        "nodata": "Đang nhận dữ liệu...",
+        "dot": false,
+        "ymin": "0",
+        "ymax": "0.2",
+        "removeOlder": "1",
+        "removeOlderPoints": "20",
+        "removeOlderUnit": "60",
+        "cutout": 0,
+        "useOneColor": false,
+        "useUTC": false,
+        "colors": [
+            "#1976d2",
+            "#aec0ff",
+            "#2ca02c",
+            "#d62728",
+            "#9467bd",
+            "#8c564b",
+            "#e377c2",
+            "#7f7f7f",
+            "#bcbd22",
+            "#17becf"
+        ],
+        "outputs": 1,
+        "x": 1390,
+        "y": 640,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "mqtt_in_water",
+        "type": "mqtt in",
+        "z": "01122f8bf11e4369",
+        "name": "MQTT Water",
+        "topic": "tuoicay/water_usage",
+        "qos": "0",
+        "datatype": "json",
+        "broker": "f9d19b90f3fba9ce",
+        "nl": false,
+        "rap": false,
+        "inputs": 0,
+        "x": 850,
+        "y": 560,
+        "wires": [
+            [
+                "parse_water_chart"
+            ]
+        ]
+    },
+    {
+        "id": "parse_water_chart",
+        "type": "function",
+        "z": "01122f8bf11e4369",
+        "name": "Parse Water daily",
+        "func": "var d = msg.payload;\nvar waterLog = flow.get('waterLog') || [];\nvar today = new Date().toLocaleDateString('vi-VN', {day:'2-digit',month:'2-digit'});\n\nvar found = false;\nfor (var i = 0; i < waterLog.length; i++) {\n    if (waterLog[i].date === today) {\n        waterLog[i].liters = d.daily;\n        found = true;\n        break;\n    }\n}\nif (!found) {\n    waterLog.push({date: today, liters: d.daily});\n}\nif (waterLog.length > 7) waterLog.shift();\nflow.set('waterLog', waterLog);\n\nvar chartData = [{\n    \"series\": [\"Lượng nước (L)\"],\n    \"data\": [ waterLog.map(function(w){return w.liters;}) ],\n    \"labels\": waterLog.map(function(w){return w.date;})\n}];\n\nmsg.payload = chartData;\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 1050,
+        "y": 700,
+        "wires": [
+            [
+                "chart_water_daily"
+            ]
+        ]
+    },
+    {
+        "id": "chart_water_daily",
+        "type": "ui_chart",
+        "z": "01122f8bf11e4369",
+        "name": "Water Chart Daily",
+        "group": "grp_pump_daily",
+        "order": 1,
+        "width": "12",
+        "height": "4",
+        "label": "Lịch Sử Tiêu Thụ Hàng Ngày (L)",
+        "chartType": "bar",
+        "legend": "false",
+        "xformat": "DD/MM",
+        "interpolate": "linear",
+        "nodata": "Chưa có dữ liệu thống kê",
+        "dot": false,
+        "ymin": "0",
+        "ymax": "",
+        "removeOlder": 1,
+        "removeOlderPoints": "7",
+        "removeOlderUnit": "86400",
+        "cutout": 0,
+        "useOneColor": false,
+        "useUTC": false,
+        "colors": [
+            "#2e7d32",
+            "#aec0ff",
+            "#2ca02c",
+            "#d62728",
+            "#9467bd",
+            "#8c564b",
+            "#e377c2",
+            "#7f7f7f",
+            "#bcbd22",
+            "#17becf"
+        ],
+        "outputs": 1,
+        "x": 1390,
+        "y": 760,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "f29894b6898b8970",
+        "type": "ui_template",
+        "z": "01122f8bf11e4369",
+        "group": "grp_home_status",
+        "name": "Premium Emerald CSS",
+        "order": 0,
+        "width": "12",
+        "height": "1",
+        "format": "<style>\n@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap');\n\n:root {\n    --primary: #2e7d32;\n    --surface: #ffffff;\n    --bg: #f4f7f6;\n    --text: #1a2e22;\n    --glass: rgba(255, 255, 255, 0.7);\n}\n\nbody, .nr-dashboard, md-content {\n    font-family: 'Outfit', sans-serif !important;\n    background: var(--bg) !important;\n}\n\n/* Topbar Styling */\nmd-toolbar {\n    background: var(--surface) !important;\n    color: var(--text) !important;\n    box-shadow: 0 4px 12px rgba(0,0,0,0.05) !important;\n    height: 64px !important;\n    z-index: 99 !important;\n}\n\nmd-toolbar .md-toolbar-tools {\n    padding: 0 20px !important;\n}\n\nmd-toolbar .md-toolbar-tools h1 {\n    color: var(--primary) !important;\n    font-weight: 700 !important;\n    text-transform: uppercase;\n    letter-spacing: 1px;\n    font-size: 1.2rem !important;\n    margin-left: 260px !important;\n}\n\n/* Fixed Permanent Sidebar */\nmd-sidenav {\n    background: linear-gradient(180deg, #1b5e20 0%, #2e7d32 100%) !important;\n    width: 260px !important;\n    min-width: 260px !important;\n    max-width: 260px !important;\n    position: fixed !important;\n    transform: none !important;\n    z-index: 100 !important;\n    box-shadow: 4px 0 20px rgba(0,0,0,0.1) !important;\n    display: block !important;\n}\n\n/* Top-Left Logo Container (The white area) */\n#sidebar-brand {\n    height: 64px;\n    background: #fff;\n    display: flex;\n    align-items: center;\n    padding: 0 24px;\n    border-bottom: 1px solid rgba(0,0,0,0.05);\n}\n\n#brand-logo {\n    color: var(--primary);\n    font-size: 20px;\n    font-weight: 800;\n    display: flex;\n    align-items: center;\n    gap: 10px;\n}\n\n.nr-dashboard-theme {\n    margin-left: 260px !important;\n    width: calc(100% - 260px) !important;\n}\n\n.nr-dashboard .nr-widget {\n    background: var(--glass) !important;\n    backdrop-filter: blur(10px);\n    -webkit-backdrop-filter: blur(10px);\n    border-radius: 16px !important;\n    box-shadow: 0 8px 32px rgba(0,0,0,0.05) !important;\n    border: 1px solid rgba(255,255,255,0.3) !important;\n    margin: 12px !important;\n    overflow: hidden !important;\n}\n</style>\n\n<script>\n(function() {\n    setTimeout(function() {\n        // Move Logo to Top-Left white area\n        var sidenav = document.querySelector('md-sidenav');\n        if (sidenav && !document.getElementById('sidebar-brand')) {\n            var brand = document.createElement('div');\n            brand.id = 'sidebar-brand';\n            brand.innerHTML = '<div id=\"brand-logo\"><span style=\"font-size:28px\">🌿</span> TAM-GARDEN</div>';\n            sidenav.insertBefore(brand, sidenav.firstChild);\n        }\n\n        // Update Title logic\n        function updateTitle() {\n            var activeTab = document.querySelector('.nr-dashboard .tab.active');\n            var title = document.querySelector('md-toolbar .md-toolbar-tools h1');\n            if (activeTab && title) {\n                 title.innerText = activeTab.innerText.trim().toUpperCase();\n            }\n        }\n        setInterval(updateTitle, 200);\n        \n        // Remove menu button\n        var menuBtn = document.querySelector('md-toolbar button[ng-click=\"openMenu()\"]');\n        if (menuBtn) menuBtn.style.display = 'none';\n    }, 1000);\n})();\n</script>",
+        "templateScope": "global",
+        "x": 1410,
+        "y": 700,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "80159177494cd3d6",
+        "type": "ui_text",
+        "z": "01122f8bf11e4369",
+        "group": "grp_home_status",
+        "order": 1,
+        "width": "12",
+        "height": "1",
+        "name": "Home Pump Status",
+        "label": "TÌNH TRẠNG BƠM",
+        "format": "{{msg.payload}}",
+        "layout": "row-center",
+        "className": "status-card",
+        "x": 1390,
+        "y": 440,
+        "wires": []
+    },
+    {
+        "id": "bca952a6f4390de5",
+        "type": "ui_text",
+        "z": "01122f8bf11e4369",
+        "group": "grp_pump_ctrl",
+        "order": 3,
+        "width": "12",
+        "height": "1",
+        "name": "Pump Status",
+        "label": "Hệ thống bơm",
+        "format": "{{msg.payload}}",
+        "layout": "row-spread",
+        "className": "status-card",
+        "style": false,
+        "font": "",
+        "fontSize": "",
+        "color": "#000000",
+        "x": 1370,
+        "y": 520,
+        "wires": []
+    },
+    {
+        "id": "f3ad574584ea65d4",
+        "type": "ui_text",
+        "z": "01122f8bf11e4369",
+        "group": "grp_soil_main",
+        "order": 3,
+        "width": "12",
+        "height": "1",
+        "name": "Soil Status",
+        "label": "Tình Trạng Hiện Tại",
+        "format": "{{msg.payload}}",
+        "layout": "row-spread",
+        "className": "status-card",
+        "x": 1370,
+        "y": 580,
+        "wires": []
+    },
+    {
+        "id": "d6d5a28f4977edcc",
+        "type": "ui_chart",
+        "z": "01122f8bf11e4369",
+        "name": "Chart Soil",
+        "group": "grp_soil_main",
+        "order": 2,
+        "width": "6",
+        "height": "4",
+        "label": "Đồ Thị (10 điểm)",
+        "chartType": "line",
+        "legend": "false",
+        "xformat": "HH:mm:ss",
+        "interpolate": "linear",
+        "nodata": "Đang nhận dữ liệu...",
+        "dot": false,
+        "ymin": "0",
+        "ymax": "100",
+        "removeOlder": "1",
+        "removeOlderPoints": "10",
+        "removeOlderUnit": "60",
+        "cutout": 0,
+        "useOneColor": false,
+        "useUTC": false,
+        "colors": [
+            "#2e7d32",
+            "#aec0ff",
+            "#2ca02c",
+            "#d62728",
+            "#9467bd",
+            "#8c564b",
+            "#e377c2",
+            "#7f7f7f",
+            "#bcbd22",
+            "#17becf"
+        ],
+        "outputs": 1,
+        "x": 1360,
+        "y": 180,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "b9e76b4d44b2b422",
+        "type": "ui_gauge",
+        "z": "01122f8bf11e4369",
+        "name": "Gauge Soil",
+        "group": "grp_soil_main",
+        "order": 1,
+        "width": "6",
+        "height": "4",
+        "gtype": "gage",
+        "title": "Độ Ẩm Đất",
+        "label": "%",
+        "format": "{{value}}%",
+        "min": "0",
+        "max": "100",
+        "colors": [
+            "#cf6679",
+            "#f9a825",
+            "#2e7d32"
+        ],
+        "seg1": "30",
+        "seg2": "60",
+        "className": "custom-gauge",
+        "x": 1370,
+        "y": 120,
+        "wires": []
+    },
+    {
+        "id": "f9d19b90f3fba9ce",
+        "type": "mqtt-broker",
+        "name": "Local Mosquitto",
+        "broker": "10.179.229.33",
+        "port": "1883",
+        "clientid": "NodeRED-TTNGreen",
+        "autoConnect": true,
+        "usetls": false,
+        "protocolVersion": "4",
+        "keepalive": "60",
+        "cleansession": true,
+        "autoUnsubscribe": true,
+        "birthTopic": "",
+        "birthQos": "0",
+        "birthPayload": "",
+        "birthMsg": {},
+        "closeTopic": "",
+        "closePayload": "",
+        "closeMsg": {},
+        "willTopic": "",
+        "willQos": "0",
+        "willPayload": "",
+        "willMsg": {},
+        "userProps": "",
+        "sessionExpiry": ""
+    },
+    {
+        "id": "grp_air_temp_main",
+        "type": "ui_group",
+        "name": "🌡 Giám Sát Nhiệt Độ",
+        "tab": "tab_air",
+        "order": 1,
+        "disp": true,
+        "width": "12",
+        "collapse": false
+    },
+    {
+        "id": "grp_air_hum_main",
+        "type": "ui_group",
+        "name": "💨 Giám Sát Độ Ẩm Không Khí",
+        "tab": "tab_air",
+        "order": 2,
+        "disp": true,
+        "width": "12",
+        "collapse": false
+    },
+    {
+        "id": "grp_home_data",
+        "type": "ui_group",
+        "name": "⚡ Dữ Liệu Nhanh",
+        "tab": "tab_home",
+        "order": 2,
+        "disp": true,
+        "width": "12",
+        "collapse": false
+    },
+    {
+        "id": "grp_home_gauges",
+        "type": "ui_group",
+        "name": "⚡ Đồng Hồ Theo Dõi Nhanh",
+        "tab": "tab_home",
+        "order": 2,
+        "disp": true,
+        "width": "12",
+        "collapse": false
+    },
+    {
+        "id": "grp_pump_ctrl",
+        "type": "ui_group",
+        "name": "🎛 Điều Khiển Hệ Thống",
+        "tab": "tab_pump",
+        "order": 3,
+        "disp": true,
+        "width": "6",
+        "collapse": false
+    },
+    {
+        "id": "23771aa94bb316bf",
+        "type": "mqtt-broker",
+        "name": "Local Mosquitto",
+        "broker": "10.179.229.33",
+        "port": "1883",
+        "clientid": "NodeRED-Irrigation",
+        "autoConnect": true,
+        "usetls": false,
+        "protocolVersion": "4",
+        "keepalive": "60",
+        "cleansession": true,
+        "autoUnsubscribe": true,
+        "birthTopic": "",
+        "birthQos": "0",
+        "birthPayload": "",
+        "birthMsg": {},
+        "closeTopic": "",
+        "closeQos": "0",
+        "closePayload": "",
+        "closeMsg": {},
+        "willTopic": "",
+        "willQos": "0",
+        "willPayload": "",
+        "willMsg": {},
+        "sessionExpiry": ""
+    },
+    {
+        "id": "grp_pump_realtime",
+        "type": "ui_group",
+        "name": "🌊 Lượng Nước Tưới Thực Tế (L/s)",
+        "tab": "tab_pump",
+        "order": 1,
+        "disp": true,
+        "width": "12",
+        "collapse": false
+    },
+    {
+        "id": "grp_pump_daily",
+        "type": "ui_group",
+        "name": "📊 Thống Kê Tiêu Thụ Theo Ngày",
+        "tab": "tab_pump",
+        "order": 2,
+        "disp": true,
+        "width": "12",
+        "collapse": false
+    },
+    {
+        "id": "grp_home_status",
+        "type": "ui_group",
+        "name": "📊 Trạng Thái Hệ Thống",
+        "tab": "tab_home",
+        "order": 1,
+        "disp": true,
+        "width": "12",
+        "collapse": false
+    },
+    {
+        "id": "grp_soil_main",
+        "type": "ui_group",
+        "name": "💧 Giám Sát Độ Ẩm Đất",
+        "tab": "tab_soil",
+        "order": 1,
+        "disp": true,
+        "width": "12",
+        "collapse": false
+    },
+    {
+        "id": "tab_air",
+        "type": "ui_tab",
+        "name": "Không Khí",
+        "icon": "cloud",
+        "order": 22,
+        "disabled": false,
+        "hidden": false
+    },
+    {
+        "id": "tab_home",
+        "type": "ui_tab",
+        "name": "Trang chủ",
+        "icon": "home",
+        "order": 9,
+        "disabled": false,
+        "hidden": false
+    },
+    {
+        "id": "tab_pump",
+        "type": "ui_tab",
+        "name": "Tưới Nước",
+        "icon": "water_drop",
+        "order": 28,
+        "disabled": false,
+        "hidden": false
+    },
+    {
+        "id": "tab_soil",
+        "type": "ui_tab",
+        "name": "Đất Trồng",
+        "icon": "grain",
+        "order": 16,
+        "disabled": false,
+        "hidden": false
+    },
+    {
+        "id": "e383e8d7fdd057b9",
+        "type": "global-config",
+        "env": [],
+        "modules": {
+            "node-red-dashboard": "3.6.6"
+        }
+    }
+]
